@@ -7,7 +7,6 @@ public class BookSellerAgent extends Agent {
 	private final Hashtable<String, Integer> catalogue = new Hashtable<>();
 	private BookSellerGui myGui;
 
-	// Put agent initializations here
 	protected void setup() {
         catalogue.put("Кобзар", 100);
 		catalogue.put("Енеїда", 200);
