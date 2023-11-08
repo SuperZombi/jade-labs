@@ -2,11 +2,14 @@ import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.*;
 import jade.lang.acl.ACLMessage;
+import jade.domain.*;
+import jade.domain.FIPAAgentManagement.*;
 
 public class BookBuyerAgent extends Agent {
 	private String targetBookTitle;
 	private int targetBookPrice;
 	private BookBuyerGui myGui;
+	private AID sellerAgent;
 
 	protected void setup() {
 		System.out.println("Buyer-agent " + getAID().getName() + " started");
@@ -40,11 +43,21 @@ public class BookBuyerAgent extends Agent {
 	public void makeSearchRequest(final String bookTitle) {
 		addBehaviour(new OneShotBehaviour() {
 			public void action(){
+				DFAgentDescription template = new DFAgentDescription();
+				ServiceDescription sd = new ServiceDescription();
+				sd.setType("book-selling");
+				template.addServices(sd);
+				try {
+					DFAgentDescription[] result = DFService.search(myAgent, template);
+					sellerAgent = result[0].getName();
+				}
+				catch (FIPAException ignored) { }
+
 				targetBookTitle = bookTitle;
 				log("Trying to find «" + targetBookTitle + "»");
 
 				ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
-				msg.addReceiver(new AID("Seller", AID.ISLOCALNAME));
+				msg.addReceiver(sellerAgent);
 				msg.setConversationId("book-selling");
 				msg.setContent(targetBookTitle);
 				send(msg);
@@ -55,7 +68,7 @@ public class BookBuyerAgent extends Agent {
 		addBehaviour(new OneShotBehaviour() {
 			public void action(){
 				ACLMessage msg = new ACLMessage(ACLMessage.CONFIRM);
-				msg.addReceiver(new AID("Seller", AID.ISLOCALNAME));
+				msg.addReceiver(sellerAgent);
 				msg.setConversationId("book-selling");
 				msg.setContent(targetBookTitle);
 				send(msg);

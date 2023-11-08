@@ -1,6 +1,8 @@
 import java.util.*;
 import jade.core.Agent;
 import jade.core.behaviours.*;
+import jade.domain.*;
+import jade.domain.FIPAAgentManagement.*;
 import jade.lang.acl.ACLMessage;
 
 public class BookSellerAgent extends Agent {
@@ -8,7 +10,7 @@ public class BookSellerAgent extends Agent {
 	private BookSellerGui myGui;
 
 	protected void setup() {
-        catalogue.put("Кобзар", 100);
+		catalogue.put("Кобзар", 100);
 		catalogue.put("Енеїда", 200);
 		catalogue.put("Лісова пісня", 300);
 		catalogue.put("Тигролови", 500);
@@ -18,6 +20,18 @@ public class BookSellerAgent extends Agent {
 		myGui.showGui();
 
 		addBehaviour(new OfferRequestsServer());
+
+		DFAgentDescription dfd = new DFAgentDescription();
+		dfd.setName(getAID());
+		ServiceDescription sd = new ServiceDescription();
+		sd.setType("book-selling");
+		sd.setName("JADE-book-trading");
+		dfd.addServices(sd);
+		try {
+			DFService.register(this, dfd);
+		} catch (FIPAException ignored) {}
+
+		System.out.println("Seller-agent " + getAID().getName() + " started");
 	}
 
 	protected void log(String text) {
@@ -27,6 +41,9 @@ public class BookSellerAgent extends Agent {
 	protected void takeDown() {
 		// myGui.dispose();
 		System.out.println("Seller-agent " + getAID().getName() + " closed");
+		try {
+			DFService.deregister(this);
+		} catch (FIPAException ignored) {}
 	}
 
 	public void updateCatalogue(final String title, final int price) {
