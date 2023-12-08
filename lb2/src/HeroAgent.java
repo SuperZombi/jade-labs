@@ -8,6 +8,7 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
+import java.util.Objects;
 
 public class HeroAgent extends Agent {
     private AID enviroment_agent;
@@ -57,7 +58,7 @@ public class HeroAgent extends Agent {
         }
     }
     private class sendMessageToNavigaror extends OneShotBehaviour{
-        private String content;
+        private final String content;
         public sendMessageToNavigaror(String content) {
             this.content = content;
         }
@@ -70,7 +71,7 @@ public class HeroAgent extends Agent {
         }
     }
     private class sendCommandToEnviroment extends OneShotBehaviour{
-        private String content;
+        private final String content;
         public sendCommandToEnviroment(String content) {
             this.content = content;
         }
@@ -89,34 +90,42 @@ public class HeroAgent extends Agent {
             if (msg != null) {
                 if (msg.getPerformative() == ACLMessage.INFORM) {
                     String arrayString = msg.getContent();
+                    System.out.println(arrayString);
                     String[] elements = arrayString.substring(1, arrayString.length() - 1).split(", ");
-                    String requestString = "";
+                    StringBuilder requestString = new StringBuilder();
                     for (String element : elements){
                         switch (element){
                             case ("stench"):{
-                                requestString += "This place is pretty stinks.";
+                                requestString.append("This place is pretty stinks."); break;
                             }
                             case ("breeze"):{
-                                requestString += "I feel some breeze here.";
+                                requestString.append("I feel some breeze here."); break;
                             }
                             case ("glitter"):{
-                                requestString += "I see a bright light.";
+                                requestString.append("I see a bright light."); break;
                             }
                             case ("bump"):{
-                                requestString += "I don't miss, I give it a chance.";
+                                requestString.append("I don't miss, I give it a chance."); break;
                             }
                             case ("scream"):{
-                                requestString += "And so it will be with everyone.";
+                                requestString.append("And so it will be with everyone."); break;
                             }
                         }
                     }
-                    if (requestString == ""){
-                        requestString = "I think, there's nothing to kill.";
+                    if (requestString.toString().isEmpty()){
+                        requestString = new StringBuilder("I think, there's nothing to kill.");
                     }
-                    addBehaviour(new sendMessageToNavigaror(requestString));
+                    addBehaviour(new sendMessageToNavigaror(requestString.toString()));
                 }
-                else if (msg.getPerformative() == ACLMessage.CFP) {
-                    addBehaviour(new sendCommandToEnviroment(""));
+                else if (msg.getPerformative() == ACLMessage.CFP && Objects.equals(msg.getSender(), navigator_agent)) {
+                    addBehaviour(new sendCommandToEnviroment(msg.getContent()));
+                }
+                else if (Objects.equals(msg.getSender(), enviroment_agent)){
+                    addBehaviour(new WakerBehaviour(myAgent, 3000) {
+                        public void handleElapsedTimeout(){
+                            addBehaviour(new getState());
+                        }
+                    } );
                 }
             }
         }

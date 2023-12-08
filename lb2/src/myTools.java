@@ -1,4 +1,4 @@
-import java.util.HashMap;
+import java.util.*;
 
 class GameElement {
     String name;
@@ -21,16 +21,16 @@ class Hero extends GameElement {
     }
 
     int[] moveFoward(int y, int x){
-        if (this.view_direction == "l"){
+        if (Objects.equals(this.view_direction, "l")){
             return new int[]{y, x - 1};
         }
-        else if (this.view_direction == "r"){
+        else if (Objects.equals(this.view_direction, "r")){
             return new int[]{y, x + 1};
         }
-        else if (this.view_direction == "u"){
+        else if (Objects.equals(this.view_direction, "u")){
             return new int[]{y - 1, x};
         }
-        else if (this.view_direction == "d"){
+        else if (Objects.equals(this.view_direction, "d")){
             return new int[]{y + 1, x};
         }
         return new int[]{y, x};
@@ -40,10 +40,10 @@ class Hero extends GameElement {
     public String toString() {
         String[] answer = {" ", " ", " "};
         answer[1]=super.toString();
-        if (this.view_direction == "l"){answer[0]="<";}
-        else if (this.view_direction == "r"){answer[2]=">";}
-        else if (this.view_direction == "u"){answer[2]="⭡";}
-        else if (this.view_direction == "d"){answer[2]="⭣";}
+        if (Objects.equals(this.view_direction, "l")){answer[0]="<";}
+        else if (Objects.equals(this.view_direction, "r")){answer[2]=">";}
+        else if (Objects.equals(this.view_direction, "u")){answer[2]="⭡";}
+        else if (Objects.equals(this.view_direction, "d")){answer[2]="⭣";}
         return String.join("", answer);
     }
 }
@@ -60,5 +60,12 @@ class HashMapParser {
             }
         }
         return hashMap;
+    }
+    static public String convertHashMapToString(Map<String, Object> hashMap) {
+        List<String> result = new ArrayList<>();
+        for (Map.Entry<String, Object> entry : hashMap.entrySet()) {
+            result.add(entry.getKey() + "=" + entry.getValue());
+        }
+        return String.join("&", result);
     }
 }

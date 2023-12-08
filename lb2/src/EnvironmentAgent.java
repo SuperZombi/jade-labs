@@ -6,10 +6,7 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class EnvironmentAgent extends Agent {
     private GameElement[][] Board;
@@ -38,8 +35,6 @@ public class EnvironmentAgent extends Agent {
         Board[1][2] = new GameElement("Pit");
         Board[3][2] = new GameElement("Pit");
         Board[3][0] = new Hero("r");
-
-        displayBoard();
     }
 
     void displayBoard() {
@@ -103,31 +98,37 @@ public class EnvironmentAgent extends Agent {
                     }
                     reply.setPerformative(ACLMessage.INFORM);
                     reply.setContent(Arrays.toString(nearbyObjects));
+                    displayBoard();
                 }
                 else if (reply.getPerformative() == ACLMessage.CFP) {
                     HashMap<String, String> hashMap = HashMapParser.parseStringToHashMap(msg.getContent());
+                    System.out.println(hashMap);
                     String action = hashMap.get("action");
                     int[] heroPos = getGameObjects("Hero").get(0);
                     Hero hero = (Hero) Board[heroPos[0]][heroPos[1]];
-                    if (action == "switch_direction"){
+                    if (Objects.equals(action, "turn")){
                         hero.view_direction = hashMap.get("value");
                         reply.setPerformative(ACLMessage.AGREE);
                         reply.setContent("OK");
                     }
-                    else if (action == "move"){
+                    else if (Objects.equals(action, "move")){
                         int[] futureHeroPos = hero.moveFoward(heroPos[0], heroPos[1]);
-                        if (futureHeroPos[0] > rows    || heroPos[0] < 0 ||
-                            futureHeroPos[1] > columns || heroPos[1] < 0){
+                        if (futureHeroPos[0] < rows    && futureHeroPos[0] > 0 &&
+                            futureHeroPos[1] < columns && futureHeroPos[1] > 0){
+                            if (Board[futureHeroPos[0]][futureHeroPos[1]] == null){
+                                Board[futureHeroPos[0]][futureHeroPos[1]] = hero;
+                                Board[heroPos[0]][heroPos[1]] = null;
+                                reply.setPerformative(ACLMessage.AGREE);
+                                reply.setContent("OK");
+                            } else{
+                                reply.setPerformative(ACLMessage.CANCEL);
+                                reply.setContent("NO");
+                            }
+                        } else{
                             reply.setPerformative(ACLMessage.CANCEL);
                             reply.setContent("NO");
-                        } else{
-                            Board[futureHeroPos[0]][futureHeroPos[1]] = hero;
-                            Board[heroPos[0]][heroPos[1]] = null;
-                            reply.setPerformative(ACLMessage.AGREE);
-                            reply.setContent("OK");
                         }
                     }
-                    displayBoard();
                 }
                 myAgent.send(reply);
             }
