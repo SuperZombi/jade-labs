@@ -17,6 +17,17 @@ public class EnvironmentAgent extends Agent {
     private int columns;
 
     protected void setup() {
+        DFAgentDescription dfd = new DFAgentDescription();
+        dfd.setName(getAID());
+        ServiceDescription sd = new ServiceDescription();
+        sd.setType("wumpus-game");
+        sd.setName("Treasure Cave Walk");
+        dfd.addServices(sd);
+        try {
+            DFService.register(this, dfd);
+        } catch (FIPAException ignored) {}
+
+        addBehaviour(new OfferRequestsServer());
         System.out.println("Wumpus Environment: " + getAID().getName());
 
         rows = 4; columns = 4;
@@ -29,18 +40,6 @@ public class EnvironmentAgent extends Agent {
         Board[3][0] = new Hero("r");
 
         displayBoard();
-
-        DFAgentDescription dfd = new DFAgentDescription();
-        dfd.setName(getAID());
-        ServiceDescription sd = new ServiceDescription();
-        sd.setType("wumpus-game");
-        sd.setName("Treasure Cave Walk");
-        dfd.addServices(sd);
-        try {
-            DFService.register(this, dfd);
-        } catch (FIPAException ignored) {}
-
-        addBehaviour(new OfferRequestsServer());
     }
 
     void displayBoard() {
@@ -89,8 +88,9 @@ public class EnvironmentAgent extends Agent {
 
                     for (int i = heroRow - 1; i <= heroRow + 1; i++) {
                         for (int j = heroColumn - 1; j <= heroColumn + 1; j++) {
-                            if (i >= 0 && i < Board.length && j >= 0 && j < Board[i].length && (i == heroRow || j == heroColumn)) {
+                            if (i >= 0 && i < rows && j >= 0 && j < columns && (i == heroRow || j == heroColumn)) {
                                 GameElement nearbyElement = Board[i][j];
+                                if (nearbyElement == null){continue;}
                                 if (nearbyElement.name == "Wumpus") {
                                     nearbyObjects[0] = "stench";
                                 } else if (nearbyElement.name == "Pit") {
@@ -101,8 +101,6 @@ public class EnvironmentAgent extends Agent {
                             }
                         }
                     }
-                    System.out.println(Arrays.toString(nearbyObjects));
-
                     reply.setPerformative(ACLMessage.INFORM);
                     reply.setContent(Arrays.toString(nearbyObjects));
                 }
@@ -129,6 +127,7 @@ public class EnvironmentAgent extends Agent {
                             reply.setContent("OK");
                         }
                     }
+                    displayBoard();
                 }
                 myAgent.send(reply);
             }
