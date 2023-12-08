@@ -2,6 +2,7 @@ import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.OneShotBehaviour;
+import jade.core.behaviours.WakerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
@@ -10,12 +11,13 @@ import jade.lang.acl.ACLMessage;
 
 public class HeroAgent extends Agent {
     private AID enviroment_agent;
+    private AID navigator_agent;
 
     protected void setup() {
         System.out.println("Hero agent " + getAID().getName());
 
-        addBehaviour(new OneShotBehaviour() {
-            public void action(){
+        addBehaviour(new WakerBehaviour(this, 1000) {
+            public void handleElapsedTimeout(){
                 DFAgentDescription template = new DFAgentDescription();
                 ServiceDescription sd = new ServiceDescription();
                 sd.setType("wumpus-game");
@@ -23,25 +25,62 @@ public class HeroAgent extends Agent {
                 try {
                     DFAgentDescription[] result = DFService.search(this.getAgent(), template);
                     enviroment_agent = result[0].getName();
+                }
+                catch (FIPAException ignored) { }
 
-                    makeAction();
+                sd.setType("wumpus-navigator");
+                template.addServices(sd);
+                try {
+                    DFAgentDescription[] result = DFService.search(this.getAgent(), template);
+                    navigator_agent = result[0].getName();
                 }
                 catch (FIPAException ignored) { }
             }
         } );
         addBehaviour(new OfferRequestsServer());
-    }
 
-    public void makeAction(){
-        addBehaviour(new OneShotBehaviour() {
-            public void action(){
-                ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
-                msg.addReceiver(enviroment_agent);
-                msg.setConversationId("get-state");
-                msg.setContent("Get state");
-                send(msg);
+        addBehaviour(new WakerBehaviour(this, 2000) {
+            public void handleElapsedTimeout(){
+                addBehaviour(new getState());
             }
         } );
+        addBehaviour(new OfferRequestsServer());
+    }
+
+    private class getState extends OneShotBehaviour{
+        public void action(){
+            ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
+            msg.addReceiver(enviroment_agent);
+            msg.setConversationId("get-state");
+            msg.setContent("Get state");
+            send(msg);
+        }
+    }
+    private class sendMessageToNavigaror extends OneShotBehaviour{
+        private String content;
+        public sendMessageToNavigaror(String content) {
+            this.content = content;
+        }
+        public void action(){
+            ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
+            msg.addReceiver(navigator_agent);
+            msg.setConversationId("current-state");
+            msg.setContent(this.content);
+            send(msg);
+        }
+    }
+    private class sendCommandToEnviroment extends OneShotBehaviour{
+        private String content;
+        public sendCommandToEnviroment(String content) {
+            this.content = content;
+        }
+        public void action(){
+            ACLMessage msg = new ACLMessage(ACLMessage.CFP);
+            msg.addReceiver(enviroment_agent);
+            msg.setConversationId("command");
+            msg.setContent(this.content);
+            send(msg);
+        }
     }
 
     private class OfferRequestsServer extends CyclicBehaviour {
@@ -49,7 +88,35 @@ public class HeroAgent extends Agent {
             ACLMessage msg = myAgent.receive();
             if (msg != null) {
                 if (msg.getPerformative() == ACLMessage.INFORM) {
-                    System.out.println(msg.getContent());
+                    String arrayString = msg.getContent();
+                    String[] elements = arrayString.substring(1, arrayString.length() - 1).split(", ");
+                    String requestString = "";
+                    for (String element : elements){
+                        switch (element){
+                            case ("stench"):{
+                                requestString += "This place is pretty stinks.";
+                            }
+                            case ("breeze"):{
+                                requestString += "I feel some breeze here.";
+                            }
+                            case ("glitter"):{
+                                requestString += "I see a bright light.";
+                            }
+                            case ("bump"):{
+                                requestString += "I don't miss, I give it a chance.";
+                            }
+                            case ("scream"):{
+                                requestString += "And so it will be with everyone.";
+                            }
+                        }
+                    }
+                    if (requestString == ""){
+                        requestString = "I think, there's nothing to kill.";
+                    }
+                    addBehaviour(new sendMessageToNavigaror(requestString));
+                }
+                else if (msg.getPerformative() == ACLMessage.CFP) {
+                    addBehaviour(new sendCommandToEnviroment(""));
                 }
             }
         }
