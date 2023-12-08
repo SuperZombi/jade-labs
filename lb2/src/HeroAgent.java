@@ -121,11 +121,15 @@ public class HeroAgent extends Agent {
                     addBehaviour(new sendCommandToEnviroment(msg.getContent()));
                 }
                 else if (Objects.equals(msg.getSender(), enviroment_agent)){
-                    addBehaviour(new WakerBehaviour(myAgent, 3000) {
-                        public void handleElapsedTimeout(){
-                            addBehaviour(new getState());
-                        }
-                    } );
+                    if (msg.getPerformative() == ACLMessage.REJECT_PROPOSAL){
+                        System.out.println(msg.getContent());
+                    } else {
+                        addBehaviour(new WakerBehaviour(myAgent, 3000) {
+                            public void handleElapsedTimeout() {
+                                addBehaviour(new getState());
+                            }
+                        });
+                    }
                 }
             }
         }

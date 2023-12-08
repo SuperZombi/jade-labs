@@ -5,7 +5,6 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
-
 import java.util.*;
 
 public class EnvironmentAgent extends Agent {
@@ -54,7 +53,7 @@ public class EnvironmentAgent extends Agent {
             }
             System.out.println("|");
         }
-        System.out.println("+---------------+");
+        System.out.println("+---------------+\n");
     }
     List<int[]> getGameObjects(String targetName){
         ArrayList<int[]> coordinatesList = new ArrayList<>();
@@ -120,9 +119,14 @@ public class EnvironmentAgent extends Agent {
                                 Board[heroPos[0]][heroPos[1]] = null;
                                 reply.setPerformative(ACLMessage.AGREE);
                                 reply.setContent("OK");
-                            } else{
-                                reply.setPerformative(ACLMessage.CANCEL);
-                                reply.setContent("NO");
+                            }
+                            else if (Board[futureHeroPos[0]][futureHeroPos[1]].name == "Gold"){
+                                reply.setPerformative(ACLMessage.REJECT_PROPOSAL);
+                                reply.setContent("You win");
+                            }
+                            else{
+                                reply.setPerformative(ACLMessage.REJECT_PROPOSAL);
+                                reply.setContent("You died");
                             }
                         } else{
                             reply.setPerformative(ACLMessage.CANCEL);
