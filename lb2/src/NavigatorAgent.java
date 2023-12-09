@@ -36,7 +36,7 @@ public class NavigatorAgent extends Agent {
                             Map.of("action","turn", "value", "u"),
                             Map.of("action","turn", "value", "d"),
                             Map.of("action","move", "value", "true"),
-                            // Map.of("action","shoot", "value", "true")
+                            Map.of("action","shoot", "value", "true")
                     };
                     int randomIndex = new Random().nextInt(choices.length);
                     String randomChoice = HashMapParser.convertHashMapToString(choices[randomIndex]);

@@ -11,6 +11,7 @@ public class EnvironmentAgent extends Agent {
     private GameElement[][] Board;
     private int rows;
     private int columns;
+    String shootResult = "";
 
     protected void setup() {
         DFAgentDescription dfd = new DFAgentDescription();
@@ -95,6 +96,14 @@ public class EnvironmentAgent extends Agent {
                             }
                         }
                     }
+                    if (!Objects.equals(shootResult, "")){
+                        if (Objects.equals(shootResult, "scream")){
+                            nearbyObjects[4] = "scream";
+                        } else if (Objects.equals(shootResult, "bump")){
+                            nearbyObjects[3] = "bump";
+                        }
+                        shootResult = "";
+                    }
                     reply.setPerformative(ACLMessage.INFORM);
                     reply.setContent(Arrays.toString(nearbyObjects));
                     displayBoard();
@@ -112,8 +121,8 @@ public class EnvironmentAgent extends Agent {
                     }
                     else if (Objects.equals(action, "move")){
                         int[] futureHeroPos = hero.moveFoward(heroPos[0], heroPos[1]);
-                        if (futureHeroPos[0] < rows    && futureHeroPos[0] > 0 &&
-                            futureHeroPos[1] < columns && futureHeroPos[1] > 0){
+                        if (futureHeroPos[0] < rows    && futureHeroPos[0] >= 0 &&
+                            futureHeroPos[1] < columns && futureHeroPos[1] >= 0){
                             if (Board[futureHeroPos[0]][futureHeroPos[1]] == null){
                                 Board[futureHeroPos[0]][futureHeroPos[1]] = hero;
                                 Board[heroPos[0]][heroPos[1]] = null;
@@ -131,6 +140,33 @@ public class EnvironmentAgent extends Agent {
                         } else{
                             reply.setPerformative(ACLMessage.CANCEL);
                             reply.setContent("NO");
+                        }
+                    }
+                    else if (Objects.equals(action, "shoot")){
+                        shootResult = "bump";
+                        List<int[]> wumpusRequest = getGameObjects("Wumpus");
+                        if (!wumpusRequest.isEmpty()) {
+                            int[] wumpusPos = wumpusRequest.get(0);
+                            if (Objects.equals(hero.view_direction, "r")) {
+                                if (wumpusPos[0] == heroPos[0] && wumpusPos[1] > heroPos[1]) {
+                                    shootResult = "scream";
+                                }
+                            } else if (Objects.equals(hero.view_direction, "l")) {
+                                if (wumpusPos[0] == heroPos[0] && wumpusPos[1] < heroPos[1]) {
+                                    shootResult = "scream";
+                                }
+                            } else if (Objects.equals(hero.view_direction, "u")) {
+                                if (wumpusPos[1] == heroPos[1] && wumpusPos[0] < heroPos[0]) {
+                                    shootResult = "scream";
+                                }
+                            } else if (Objects.equals(hero.view_direction, "d")) {
+                                if (wumpusPos[1] == heroPos[1] && wumpusPos[0] > heroPos[0]) {
+                                    shootResult = "scream";
+                                }
+                            }
+                            if (Objects.equals(shootResult, "scream")) {
+                                Board[wumpusPos[0]][wumpusPos[1]] = null;
+                            }
                         }
                     }
                 }
